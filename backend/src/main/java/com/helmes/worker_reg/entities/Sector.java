@@ -1,6 +1,8 @@
 package com.helmes.worker_reg.entities;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -37,6 +39,7 @@ public class Sector {
         this.sectorName = sectorName;
     }
 
+    @JsonIgnore
     public Set<Worker> getWorkers() {
         return workers;
     }

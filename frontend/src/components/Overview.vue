@@ -31,13 +31,13 @@
           <template slot="items" slot-scope="props">
             <td>{{ props.item.firstName }}</td>
             <td>{{ props.item.lastName }}</td>
-            <td>{{ props.item.sector }}</td>
+            <td>{{ props.item.sector.sectorName}}</td>
             <td>{{ props.item.agreedToTerms }}</td>
             <td>
               <v-btn icon class="mx-0" @click="editItem(props.item)">
                 <v-icon color="teal">edit</v-icon>
               </v-btn>
-              <v-btn icon class="mx-0" @click="deleteItem(props.item)">
+              <v-btn icon class="mx-0" @click="deleteWorker(props.item)">
                 <v-icon color="pink">delete</v-icon>
               </v-btn>
             </td>
@@ -108,31 +108,38 @@
                           <span>Choose working sector as precisely as possible. Picking industry is mandatory.</span>
                         </v-tooltip>
                       </v-flex>
+
+
                       <v-flex xs12 sm4 d-flex>
                         <v-select
-                          :items="items2"
+                          :items="industryList.map(function(sectorName){return sectorName[0]})"
                           label="Industry"
-                          v-model="editedItem.sector"
+                          v-model="selectedIndustry"
                           :rules="nonEmptyRule"
+                          v-on:change="loadSectors(2,findSectorIdBySectorName(industryList,selectedIndustry))"
                         ></v-select>
                       </v-flex>
+
                       <v-flex xs12 sm4 d-flex>
                         <v-select
-                          :items="items2"
+                          :items="sectorList.map(function(sectorName){return sectorName[0]})"
                           label="Sector"
-                          disabled
+                          v-model="selectedSector"
+                          v-on:change="loadSubSectors(3,findSectorIdBySectorName(sectorList,selectedSector))"
                         ></v-select>
                       </v-flex>
+
                       <v-flex xs12 sm4 d-flex>
                         <v-select
-                          :items="items2"
-                          label="Sub sector"
-                          disabled
+                          :items="subSectorList.map(function(sectorName){return sectorName[0]})"
+                          v-model="selectedSubSector"
+                          label="Subsector"
                         ></v-select>
                       </v-flex>
+
                       <v-flex xs12 sm4 d-flex>
                         <v-select
-                          :items="items2"
+                          :items="specialityList"
                           label="Speciality"
                           disabled
                         ></v-select>
@@ -171,7 +178,7 @@
                       <v-flex xs12 md12>
                         <v-dialog @keydown.esc="confirmDialog = false" v-model="confirmDialog" max-width="450px">
                           <v-card>
-                            <v-card-title class="headline">Are you sure about deleting entry?
+                            <v-card-title class="headline">Are you sure about deleting worker?
                             </v-card-title>
                             <v-card-actions>
                               <v-btn color="error" flat @click.native="confirmDeleteItem()">Yes</v-btn>
@@ -198,7 +205,20 @@
 
   export default {
     data: () => ({
-      items2: ['Foo', 'Bar', 'Fizz', 'Buzz'],
+
+      industryList: [],
+      sectorList: [],
+      subSectorList:[],
+      specialityList:[],
+      allDepthSectorsList:[],
+
+      selectedIndustry:'',
+      selectedSector:'',
+      selectedSubSector:'',
+
+      tempList: [],
+
+
       valid: true,
       menu: false,
       nonEmptyRule: [
@@ -219,10 +239,11 @@
       ],
       items: [],
       editedIndex: -1,
+
       editedItem: {
         firstName: '',
         lastName: '',
-        sector: '',
+        sector: {},
         agreedToTerms: '',
       },
     }),
@@ -234,36 +255,99 @@
     watch: {
       dialog(val) {
         val || this.close()
+      },
+      editedItem: {
+        handler(val) {
+          console.log(val)
+        },
+        deep: true
       }
     },
     created() {
-      //this.items.push({agreedToTerms:true, firstName:'Deniss',lastName:'Potapenko',sector:'Fizz'});
-
-      AXIOS.get('/workersall')
+      //Read in workers
+      AXIOS.get('/workers')
         .then(response => {
           this.items = response.data
-          console.log(this.items);
+        })
+        .catch(e => {
+          this.errors.push(e)
+        });
+      //Read in sector
+      AXIOS.get('/sector/1')
+        .then(response => {
+          this.industryList = response.data;
+        })
+        .catch(e => {
+          this.errors.push(e)
+        });
+      AXIOS.get('/sector')
+        .then(response => {
+          this.allDepthSectorsList = response.data;
         })
         .catch(e => {
           this.errors.push(e)
         });
 
     },
+
     methods: {
       initialize() {
         this.items = []
       },
+
+      loadSectors(depth, parent) {
+        AXIOS.get('/sector/' + depth + "/" + parent)
+          .then(response => {
+            this.sectorList = response.data;
+          })
+          .catch(e => {
+            this.errors.push(e)
+          });
+      },
+      loadSubSectors(depth, parent) {
+        AXIOS.get('/sector/' + depth + "/" + parent)
+          .then(response => {
+            this.subSectorList = response.data;
+          })
+          .catch(e => {
+            this.errors.push(e)
+          });
+      },
+
+      giveId(listOfSectors, sectorName) {
+        console.log(this.editedItem.sector.id)
+        for (let i = 0; i < listOfSectors.length; i++) {
+          if (listOfSectors[i][0] === sectorName) {
+            console.log(listOfSectors[i][1])
+            this.editedItem.sector.id = listOfSectors[i][1]
+          }
+        }
+      },
       editItem(item) {
-        console.log(item.agreedToTerms);
         this.editedIndex = item.id;
-        this.editedItem = Object.assign({}, item)
+        //this.editedItem = Object.assign({}, item)
+
+        this.editedItem.firstName = item.firstName;
+        this.editedItem.lastName = item.lastName;
+        this.editedItem.agreedToTerms = item.agreedToTerms;
+
         this.dialog = true
       },
       addNewWorker() {
+        let depth = 1;
+        AXIOS.get('/sector/' + depth)
+          .then(response => {
+            console.log(response.data)
+            this.industryList = response.data;
+          })
+          .catch(e => {
+            this.errors.push(e)
+          });
         this.$refs.form.reset();
         this.dialog = true;
+
       },
-      deleteItem(item) {
+      deleteWorker(item) {
         this.confirmDialog = true;
         AXIOS.delete('/workers/' + item.id);
         this.deleteItemIndex = this.items.indexOf(item)
@@ -271,6 +355,13 @@
       confirmDeleteItem() {
         this.items.splice(this.deleteItemIndex, 1);
         this.confirmDialog = false;
+      },
+      findSectorIdBySectorName(listOfSectors, sectorName) {
+        for (let i = 0; i < listOfSectors.length; i++) {
+          if (listOfSectors[i][0] === sectorName) {
+            return listOfSectors[i][1];
+          }
+        }
       },
       close() {
         this.dialog = false;
@@ -284,9 +375,13 @@
           if (this.editedIndex > -1) {
             Object.assign(this.items.find(item => item.id === this.editedIndex), this.editedItem);
             AXIOS.put('workers/' + this.editedIndex, {
-              agreedToTerms: this.editedItem.agreedToTerms,
               firstName: this.editedItem.firstName,
-              lastName: this.editedItem.lastName
+              lastName: this.editedItem.lastName,
+              sector: {
+                id: this.findSectorIdBySectorName(this.industryList, this.editedItem.sector),
+                sectorName: this.editedItem.sector.sectorName
+              },
+              agreedToTerms: this.editedItem.agreedToTerms
             })
               .then(response => {
                 console.log(response);
@@ -294,19 +389,37 @@
               .catch(function (error) {
                 console.log(error);
               });
+            console.log(this.items)
+            this.editedItem.sector = {
+              id: this.findSectorIdBySectorName(this.industryList, this.editedItem.sector),
+              sectorName: this.editedItem.sector.sectorName
+            };
+
+            Object.assign(this.items.find(item => item.id === this.editedIndex), this.editedItem);
+
           } else {
+            console.log(this.editedItem);
             AXIOS.post('workers/', {
               agreedToTerms: this.editedItem.agreedToTerms,
               firstName: this.editedItem.firstName,
-              lastName: this.editedItem.lastName
+              lastName: this.editedItem.lastName,
+              sector: {
+                id: this.editedItem.sector.id,
+                sectorName: this.editedItem.sector.sectorName
+              }
             }).then(response => {
               console.log(response);
             })
               .catch(function (error) {
                 console.log(error);
               });
-            this.items.push(this.editedItem)
+            this.editedItem.sector = {
+              id: this.findSectorIdBySectorName(this.industryList, this.editedItem.sector.sectorName),
+              sectorName: this.editedItem.sector.sectorName
+            };
+            this.items.push(this.editedItem);
           }
+          console.log(this.editedItem);
           this.close();
         }
       }

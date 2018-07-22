@@ -8,7 +8,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 @Entity
-@Table(name = "service_hierarchy")
+@Table(name = "sector_hierarchy")
 public class SectorHierarchy {
 
     @Id

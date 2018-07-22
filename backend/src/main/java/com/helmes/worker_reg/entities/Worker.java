@@ -1,7 +1,5 @@
 package com.helmes.worker_reg.entities;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,6 +28,14 @@ public class Worker {
     @NotNull
     private @Getter @Setter Boolean agreedToTerms;
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getFirstName() {
         return firstName;
     }
@@ -54,7 +60,6 @@ public class Worker {
         this.agreedToTerms = agreedToTerms;
     }
 
-    @JsonIgnore
     public Sector getSector() {
         return sector;
     }
