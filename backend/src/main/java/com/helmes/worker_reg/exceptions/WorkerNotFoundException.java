@@ -14,6 +14,6 @@ public class WorkerNotFoundException extends Exception {
 
     @Override
     public String toString(){
-        return "Worker with id " + workerId + " is not found";
+        return "Worker with id " + workerId + " was not found";
     }
 }

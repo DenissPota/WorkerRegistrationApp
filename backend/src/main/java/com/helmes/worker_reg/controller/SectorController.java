@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import java.util.List;
+import java.util.Optional;
 
 import javax.persistence.Persistence;
 import javax.persistence.Query;
@@ -97,7 +98,6 @@ public class SectorController {
      * Find all sectors.
      * Useful for finding id using name and vice-versa.
      *
-     *
      * @return all sectors(id, name)
      */
     @CrossOrigin(origins = "http://localhost:8080")
@@ -105,6 +105,16 @@ public class SectorController {
     public List<Sector> getAllSectorsIdAndNames() {
        return sectorRepository.findAll();
     }
+//    /**
+//     * Find sector by id.
+//     *
+//     * @return sector(id, name)
+//     */
+//    @CrossOrigin(origins = "http://localhost:8080")
+//    @GetMapping("/sector/{id}")
+//    public Optional<Sector> getAllSectorsById(@PathVariable Long id) {
+//       return sectorRepository.findById(id);
+//    }
 
 
 }

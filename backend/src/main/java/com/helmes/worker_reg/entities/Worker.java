@@ -1,8 +1,5 @@
 package com.helmes.worker_reg.entities;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -13,20 +10,20 @@ public class Worker {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private @Getter @Setter Long id;
+    private Long id;
 
     @NotBlank @Column(length = 900)
-    private @Getter @Setter String firstName;
+    private String firstName;
 
     @NotBlank @Column(length = 900)
-    private @Getter @Setter String lastName;
+    private String lastName;
 
     @ManyToOne
     @JoinColumn(name = "sector_id", nullable = false)
-    private @Getter @Setter Sector sector;
+    private Sector sector;
 
     @NotNull
-    private @Getter @Setter Boolean agreedToTerms;
+    private Boolean agreedToTerms;
 
     public Long getId() {
         return id;

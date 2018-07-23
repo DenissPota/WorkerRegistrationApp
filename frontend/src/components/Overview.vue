@@ -6,7 +6,7 @@
         <span class="display-2">Worker registration system</span>
       </v-flex>
       <v-flex xs12 md12 text-xs-center>
-        <v-btn color="primary" dark large @click="addNewWorker()" class="mb-2">Add new worker
+        <v-btn color="primary" dark large @click="addWorker()" class="mb-2">Add new worker
           <v-icon class="ml-2">add</v-icon>
         </v-btn>
       </v-flex>
@@ -34,7 +34,7 @@
             <td>{{ props.item.sector.sectorName}}</td>
             <td>{{ props.item.agreedToTerms }}</td>
             <td>
-              <v-btn icon class="mx-0" @click="editItem(props.item)">
+              <v-btn icon class="mx-0" @click="editWorker(props.item)">
                 <v-icon color="teal">edit</v-icon>
               </v-btn>
               <v-btn icon class="mx-0" @click="deleteWorker(props.item)">
@@ -105,45 +105,42 @@
                             fab
                             small><b>?</b>
                           </v-btn>
-                          <span>Choose working sector as precisely as possible. Picking industry is mandatory.</span>
+                          <span>Choose working field as precisely as possible. Picking industry is mandatory.</span>
                         </v-tooltip>
                       </v-flex>
-
-
                       <v-flex xs12 sm4 d-flex>
                         <v-select
                           :items="industryList.map(function(sectorName){return sectorName[0]})"
                           label="Industry"
                           v-model="selectedIndustry"
                           :rules="nonEmptyRule"
-                          v-on:change="loadSectors(2,findSectorIdBySectorName(industryList,selectedIndustry))"
+                          v-on:change="loadSectors(findFieldIdByFieldName(industryList,selectedIndustry))"
                         ></v-select>
                       </v-flex>
-
                       <v-flex xs12 sm4 d-flex>
                         <v-select
                           :items="sectorList.map(function(sectorName){return sectorName[0]})"
                           label="Sector"
                           v-model="selectedSector"
-                          v-on:change="loadSubSectors(3,findSectorIdBySectorName(sectorList,selectedSector))"
+                          v-on:change="loadSubSectors(findFieldIdByFieldName(sectorList,selectedSector))"
                         ></v-select>
                       </v-flex>
-
                       <v-flex xs12 sm4 d-flex>
                         <v-select
                           :items="subSectorList.map(function(sectorName){return sectorName[0]})"
-                          v-model="selectedSubSector"
                           label="Subsector"
+                          v-model="selectedSubSector"
+                          v-on:change="loadSpecialities(findFieldIdByFieldName(subSectorList,selectedSubSector))"
+                        ></v-select>
+                      </v-flex>
+                      <v-flex xs12 sm4 d-flex>
+                        <v-select
+                          :items="specialityList.map(function(sectorName){return sectorName[0]})"
+                          label="Speciality"
+                          v-model="selectedSpeciality"
                         ></v-select>
                       </v-flex>
 
-                      <v-flex xs12 sm4 d-flex>
-                        <v-select
-                          :items="specialityList"
-                          label="Speciality"
-                          disabled
-                        ></v-select>
-                      </v-flex>
                       <!--Agree to terms section-->
                     </v-layout>
                     <v-spacer class="mb-3"></v-spacer>
@@ -181,14 +178,13 @@
                             <v-card-title class="headline">Are you sure about deleting worker?
                             </v-card-title>
                             <v-card-actions>
-                              <v-btn color="error" flat @click.native="confirmDeleteItem()">Yes</v-btn>
+                              <v-btn color="error" flat @click.native="confirmDeleteWorker()">Yes</v-btn>
                               <v-btn color="primary" flat @click.native="confirmDialog = false">No</v-btn>
                             </v-card-actions>
                           </v-card>
                         </v-dialog>
                       </v-flex>
                     </v-layout>
-
                   </v-container>
                 </v-card-text>
               </v-card>
@@ -208,13 +204,12 @@
 
       industryList: [],
       sectorList: [],
-      subSectorList:[],
-      specialityList:[],
-      allDepthSectorsList:[],
-
-      selectedIndustry:'',
-      selectedSector:'',
-      selectedSubSector:'',
+      subSectorList: [],
+      specialityList: [],
+      selectedIndustry: '',
+      selectedSector: '',
+      selectedSubSector: '',
+      selectedSpeciality: '',
 
       tempList: [],
 
@@ -280,14 +275,6 @@
         .catch(e => {
           this.errors.push(e)
         });
-      AXIOS.get('/sector')
-        .then(response => {
-          this.allDepthSectorsList = response.data;
-        })
-        .catch(e => {
-          this.errors.push(e)
-        });
-
     },
 
     methods: {
@@ -295,8 +282,8 @@
         this.items = []
       },
 
-      loadSectors(depth, parent) {
-        AXIOS.get('/sector/' + depth + "/" + parent)
+      loadSectors(parent) {
+        AXIOS.get('/sector/2/' + parent)
           .then(response => {
             this.sectorList = response.data;
           })
@@ -304,8 +291,8 @@
             this.errors.push(e)
           });
       },
-      loadSubSectors(depth, parent) {
-        AXIOS.get('/sector/' + depth + "/" + parent)
+      loadSubSectors(parent) {
+        AXIOS.get('/sector/3/' + parent)
           .then(response => {
             this.subSectorList = response.data;
           })
@@ -313,50 +300,35 @@
             this.errors.push(e)
           });
       },
-
-      giveId(listOfSectors, sectorName) {
-        console.log(this.editedItem.sector.id)
-        for (let i = 0; i < listOfSectors.length; i++) {
-          if (listOfSectors[i][0] === sectorName) {
-            console.log(listOfSectors[i][1])
-            this.editedItem.sector.id = listOfSectors[i][1]
-          }
-        }
-      },
-      editItem(item) {
-        this.editedIndex = item.id;
-        //this.editedItem = Object.assign({}, item)
-
-        this.editedItem.firstName = item.firstName;
-        this.editedItem.lastName = item.lastName;
-        this.editedItem.agreedToTerms = item.agreedToTerms;
-
-        this.dialog = true
-      },
-      addNewWorker() {
-        let depth = 1;
-        AXIOS.get('/sector/' + depth)
+      loadSpecialities(parent) {
+        AXIOS.get('/sector/4/' + parent)
           .then(response => {
-            console.log(response.data)
-            this.industryList = response.data;
+            this.specialityList = response.data;
           })
           .catch(e => {
             this.errors.push(e)
           });
-        this.$refs.form.reset();
+      },
+      editWorker(item) {
+        this.editedIndex = item.id;
+        this.editedItem.firstName = item.firstName;
+        this.editedItem.lastName = item.lastName;
+        this.editedItem.agreedToTerms = item.agreedToTerms;
+        this.dialog = true
+      },
+      addWorker() {
         this.dialog = true;
-
       },
       deleteWorker(item) {
         this.confirmDialog = true;
         AXIOS.delete('/workers/' + item.id);
         this.deleteItemIndex = this.items.indexOf(item)
       },
-      confirmDeleteItem() {
+      confirmDeleteWorker() {
         this.items.splice(this.deleteItemIndex, 1);
         this.confirmDialog = false;
       },
-      findSectorIdBySectorName(listOfSectors, sectorName) {
+      findFieldIdByFieldName(listOfSectors, sectorName) {
         for (let i = 0; i < listOfSectors.length; i++) {
           if (listOfSectors[i][0] === sectorName) {
             return listOfSectors[i][1];
@@ -366,62 +338,64 @@
       close() {
         this.dialog = false;
         setTimeout(() => {
-          this.editedItem = Object.assign({}, this.defaultItem)
           this.editedIndex = -1
         }, 300)
       },
       save() {
         if (this.$refs.form.validate()) {
+          let chosenField;
+          let chosenFieldList;
+          if (this.selectedSpeciality !== '') {
+            chosenField = this.selectedSpeciality;
+            chosenFieldList = this.specialityList;
+          }
+          else if (this.selectedSubSector !== '') {
+            chosenField = this.selectedSubSector;
+            chosenFieldList = this.subSectorList;
+          }
+          else if (this.selectedSector !== '') {
+            chosenField = this.selectedSector;
+            chosenFieldList = this.sectorList;
+          } else {
+            chosenField = this.selectedIndustry;
+            chosenFieldList = this.industryList;
+          }
+
+          this.editedItem.sector = {
+            id: this.findFieldIdByFieldName(chosenFieldList, chosenField),
+            sectorName: chosenField
+          };
           if (this.editedIndex > -1) {
             Object.assign(this.items.find(item => item.id === this.editedIndex), this.editedItem);
             AXIOS.put('workers/' + this.editedIndex, {
               firstName: this.editedItem.firstName,
               lastName: this.editedItem.lastName,
               sector: {
-                id: this.findSectorIdBySectorName(this.industryList, this.editedItem.sector),
-                sectorName: this.editedItem.sector.sectorName
+                id: this.findFieldIdByFieldName(chosenFieldList, chosenField),
+                sectorName: chosenField
               },
               agreedToTerms: this.editedItem.agreedToTerms
-            })
-              .then(response => {
-                console.log(response);
-              })
-              .catch(function (error) {
-                console.log(error);
-              });
-            console.log(this.items)
-            this.editedItem.sector = {
-              id: this.findSectorIdBySectorName(this.industryList, this.editedItem.sector),
-              sectorName: this.editedItem.sector.sectorName
-            };
-
+            }).catch(function (error) {
+              console.log(error);
+            });
             Object.assign(this.items.find(item => item.id === this.editedIndex), this.editedItem);
-
           } else {
-            console.log(this.editedItem);
             AXIOS.post('workers/', {
               agreedToTerms: this.editedItem.agreedToTerms,
               firstName: this.editedItem.firstName,
               lastName: this.editedItem.lastName,
               sector: {
-                id: this.editedItem.sector.id,
-                sectorName: this.editedItem.sector.sectorName
+                id: this.findFieldIdByFieldName(chosenFieldList, chosenField),
+                sectorName: chosenField
               }
-            }).then(response => {
-              console.log(response);
-            })
-              .catch(function (error) {
-                console.log(error);
-              });
-            this.editedItem.sector = {
-              id: this.findSectorIdBySectorName(this.industryList, this.editedItem.sector.sectorName),
-              sectorName: this.editedItem.sector.sectorName
-            };
+            }).catch(function (error) {
+              console.log(error);
+            });
             this.items.push(this.editedItem);
           }
-          console.log(this.editedItem);
           this.close();
         }
+        console.log(this.editedItem.sector.sectorName);
       }
     },
   }
