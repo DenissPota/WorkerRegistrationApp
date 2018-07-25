@@ -117,7 +117,7 @@
                           v-on:change="loadSectors(findFieldIdByFieldName(industryList,selectedIndustry))"
                         ></v-select>
                       </v-flex>
-                      <v-flex xs12 sm4 d-flex>
+                      <v-flex xs12 sm4 d-flex v-if="isIndustrySelected">
                         <v-select
                           :items="sectorList.map(function(sectorName){return sectorName[0]})"
                           label="Sector"
@@ -125,7 +125,7 @@
                           v-on:change="loadSubSectors(findFieldIdByFieldName(sectorList,selectedSector))"
                         ></v-select>
                       </v-flex>
-                      <v-flex xs12 sm4 d-flex>
+                      <v-flex xs12 sm4 d-flex v-if="isSectorSelected">
                         <v-select
                           :items="subSectorList.map(function(sectorName){return sectorName[0]})"
                           label="Subsector"
@@ -133,7 +133,7 @@
                           v-on:change="loadSpecialities(findFieldIdByFieldName(subSectorList,selectedSubSector))"
                         ></v-select>
                       </v-flex>
-                      <v-flex xs12 sm4 d-flex>
+                      <v-flex xs12 sm4 d-flex v-if="isSubSectorSelected">
                         <v-select
                           :items="specialityList.map(function(sectorName){return sectorName[0]})"
                           label="Speciality"
@@ -206,6 +206,10 @@
       sectorList: [],
       subSectorList: [],
       specialityList: [],
+      isIndustrySelected: false,
+      isSectorSelected: false,
+      isSubSectorSelected: false,
+      isSpecialitySelected: false,
       selectedIndustry: '',
       selectedSector: '',
       selectedSubSector: '',
@@ -283,6 +287,7 @@
       },
 
       loadSectors(parent) {
+        this.isIndustrySelected = true;
         AXIOS.get('/sector/2/' + parent)
           .then(response => {
             this.sectorList = response.data;
@@ -292,6 +297,7 @@
           });
       },
       loadSubSectors(parent) {
+        this.isSectorSelected = true;
         AXIOS.get('/sector/3/' + parent)
           .then(response => {
             this.subSectorList = response.data;
@@ -301,6 +307,7 @@
           });
       },
       loadSpecialities(parent) {
+        this.isSubSectorSelected = true;
         AXIOS.get('/sector/4/' + parent)
           .then(response => {
             this.specialityList = response.data;
@@ -317,6 +324,7 @@
         this.dialog = true
       },
       addWorker() {
+        this.resetData();
         this.dialog = true;
       },
       deleteWorker(item) {
@@ -328,6 +336,14 @@
         this.items.splice(this.deleteItemIndex, 1);
         this.confirmDialog = false;
       },
+
+      resetData() {
+        this.selectedIndustry = '';
+        this.selectedSector = '';
+        this.selectedSubSector = '';
+        this.selectedSpeciality = '';
+      },
+
       findFieldIdByFieldName(listOfSectors, sectorName) {
         for (let i = 0; i < listOfSectors.length; i++) {
           if (listOfSectors[i][0] === sectorName) {
@@ -394,8 +410,8 @@
             this.items.push(this.editedItem);
           }
           this.close();
+          this.$router.go(0);
         }
-        console.log(this.editedItem.sector.sectorName);
       }
     },
   }

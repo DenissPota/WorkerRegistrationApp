@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class WorkerController {
@@ -72,5 +73,21 @@ public class WorkerController {
                 .orElseThrow(() -> new WorkerNotFoundException(id));
         workerRepository.deleteById(id);
     }
+    /**
+     * Remove worker based on id.
+     *
+     * @param id of worker that will be deleted.
+     */
+    @CrossOrigin(origins = "http://localhost:8080")
+    @GetMapping("/workers/{id}")
+    public Optional<Worker> getWorker(@PathVariable Long id) throws WorkerNotFoundException {
+        Worker worker = workerRepository.findById(id)
+                .orElseThrow(() -> new WorkerNotFoundException(id));
+        return workerRepository.findById(id);
+    }
 
+    @GetMapping("/")
+    public @ResponseBody String greeting() {
+        return "Hello World";
+    }
 }
