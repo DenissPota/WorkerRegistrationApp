@@ -92,10 +92,10 @@
                     <v-spacer class="mb-3"></v-spacer>
                     <v-divider></v-divider>
                     <v-spacer></v-spacer>
-                    <!--Sector section-->
+                    <!--Working field section-->
                     <v-layout wrap>
                       <v-flex class="headline" xs12 md12>
-                        <span slot="activator">Working sector</span>
+                        <span slot="activator">Working field</span>
                         <v-tooltip bottom>
                           <v-btn
                             slot="activator"
@@ -114,7 +114,7 @@
                           label="Industry"
                           v-model="selectedIndustry"
                           :rules="nonEmptyRule"
-                          v-on:change="loadSectors(findFieldIdByFieldName(industryList,selectedIndustry))"
+                          v-on:input="loadSectors(findFieldIdByFieldName(industryList,selectedIndustry))"
                         ></v-select>
                       </v-flex>
                       <v-flex xs12 sm4 d-flex v-if="isIndustrySelected">
@@ -122,15 +122,15 @@
                           :items="sectorList.map(function(sectorName){return sectorName[0]})"
                           label="Sector"
                           v-model="selectedSector"
-                          v-on:change="loadSubSectors(findFieldIdByFieldName(sectorList,selectedSector))"
+                          v-on:input="loadSubSectors(findFieldIdByFieldName(sectorList,selectedSector))"
                         ></v-select>
                       </v-flex>
                       <v-flex xs12 sm4 d-flex v-if="isSectorSelected">
                         <v-select
                           :items="subSectorList.map(function(sectorName){return sectorName[0]})"
-                          label="Subsector"
                           v-model="selectedSubSector"
-                          v-on:change="loadSpecialities(findFieldIdByFieldName(subSectorList,selectedSubSector))"
+                          label="Subsector"
+                          v-on:input="loadSpecialities(findFieldIdByFieldName(subSectorList,selectedSubSector))"
                         ></v-select>
                       </v-flex>
                       <v-flex xs12 sm4 d-flex v-if="isSubSectorSelected">
@@ -158,8 +158,8 @@
                             fab
                             small><b>?</b>
                           </v-btn>
-                          <span>By accessing or using the Service you agree to be bound by these Terms. If you
-                                disagree with any part of the terms then you may not access the Service.</span>
+                          <span>By accessing or using the Service you agree to be bound by these Terms. By inserting personal information,
+                            you must insert only valid information.</span>
                         </v-tooltip>
                       </v-flex>
                       <v-flex xs3 md12>
@@ -206,16 +206,17 @@
       sectorList: [],
       subSectorList: [],
       specialityList: [],
+
       isIndustrySelected: false,
       isSectorSelected: false,
       isSubSectorSelected: false,
       isSpecialitySelected: false,
+
       selectedIndustry: '',
       selectedSector: '',
       selectedSubSector: '',
       selectedSpeciality: '',
-
-      tempList: [],
+      editedItemId: '',
 
 
       valid: true,
@@ -232,7 +233,7 @@
       headers: [
         {text: 'First name', value: 'firstName'},
         {text: 'Last name', value: 'lastName'},
-        {text: 'Sector', value: 'sector'},
+        {text: 'Working field', value: 'sector'},
         {text: 'Agreed to terms', value: 'agreedToTerms'},
         {text: 'Action', sortable: false}
       ],
@@ -243,7 +244,7 @@
         firstName: '',
         lastName: '',
         sector: {},
-        agreedToTerms: '',
+        agreedToTerms: false,
       },
     }),
     computed: {
@@ -254,24 +255,9 @@
     watch: {
       dialog(val) {
         val || this.close()
-      },
-      editedItem: {
-        handler(val) {
-          console.log(val)
-        },
-        deep: true
       }
     },
     created() {
-      //Read in workers
-      AXIOS.get('/workers')
-        .then(response => {
-          this.items = response.data
-        })
-        .catch(e => {
-          this.errors.push(e)
-        });
-      //Read in sector
       AXIOS.get('/sector/1')
         .then(response => {
           this.industryList = response.data;
@@ -279,14 +265,27 @@
         .catch(e => {
           this.errors.push(e)
         });
+      this.fetchData()
     },
+
 
     methods: {
       initialize() {
         this.items = []
       },
 
+      fetchData() {
+        AXIOS.get('/workers')
+          .then(response => {
+            this.items = response.data
+          })
+          .catch(e => {
+            this.errors.push(e)
+          })
+      },
       loadSectors(parent) {
+        this.subSectorList = [];
+        this.specialityList = [];
         this.isIndustrySelected = true;
         AXIOS.get('/sector/2/' + parent)
           .then(response => {
@@ -297,6 +296,7 @@
           });
       },
       loadSubSectors(parent) {
+        this.specialityList = [];
         this.isSectorSelected = true;
         AXIOS.get('/sector/3/' + parent)
           .then(response => {
@@ -317,6 +317,7 @@
           });
       },
       editWorker(item) {
+        this.resetData();
         this.editedIndex = item.id;
         this.editedItem.firstName = item.firstName;
         this.editedItem.lastName = item.lastName;
@@ -336,14 +337,22 @@
         this.items.splice(this.deleteItemIndex, 1);
         this.confirmDialog = false;
       },
-
       resetData() {
+        this.editedItem.firstName = '';
+        this.editedItem.lastName = '';
+        this.editedItem.sector = {};
+        this.editedItem.agreedToTerms = false;
+
+        this.isIndustrySelected = false;
+        this.isSectorSelected = false;
+        this.isSubSectorSelected = false;
+        this.isSpecialitySelected = false;
+
         this.selectedIndustry = '';
         this.selectedSector = '';
         this.selectedSubSector = '';
         this.selectedSpeciality = '';
       },
-
       findFieldIdByFieldName(listOfSectors, sectorName) {
         for (let i = 0; i < listOfSectors.length; i++) {
           if (listOfSectors[i][0] === sectorName) {
@@ -377,24 +386,22 @@
             chosenFieldList = this.industryList;
           }
 
-          this.editedItem.sector = {
-            id: this.findFieldIdByFieldName(chosenFieldList, chosenField),
-            sectorName: chosenField
-          };
           if (this.editedIndex > -1) {
-            Object.assign(this.items.find(item => item.id === this.editedIndex), this.editedItem);
             AXIOS.put('workers/' + this.editedIndex, {
-              firstName: this.editedItem.firstName,
-              lastName: this.editedItem.lastName,
-              sector: {
-                id: this.findFieldIdByFieldName(chosenFieldList, chosenField),
-                sectorName: chosenField
-              },
-              agreedToTerms: this.editedItem.agreedToTerms
-            }).catch(function (error) {
+                firstName: this.editedItem.firstName,
+                lastName: this.editedItem.lastName,
+                sector: {
+                  id: this.findFieldIdByFieldName(chosenFieldList, chosenField),
+                  sectorName: chosenField
+                },
+                agreedToTerms: this.editedItem.agreedToTerms
+              }
+            ).then(() => {
+                this.fetchData();
+              }
+            ).catch(function (error) {
               console.log(error);
             });
-            Object.assign(this.items.find(item => item.id === this.editedIndex), this.editedItem);
           } else {
             AXIOS.post('workers/', {
               agreedToTerms: this.editedItem.agreedToTerms,
@@ -404,15 +411,16 @@
                 id: this.findFieldIdByFieldName(chosenFieldList, chosenField),
                 sectorName: chosenField
               }
-            }).catch(function (error) {
+            }).then(() => {
+                this.fetchData();
+              }
+            ).catch((error) => {
               console.log(error);
             });
-            this.items.push(this.editedItem);
           }
           this.close();
-          this.$router.go(0);
         }
       }
-    },
+    }
   }
 </script>

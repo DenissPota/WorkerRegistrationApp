@@ -1,11 +1,27 @@
 # WorkerRegistrationApp
-Project to register workers and their speciality single application.
+Project to register workers and their field of work in single application.
 
-**Used technologies:**
+**Used technologies**
 
 1. Spring Boot as backend
-2. Vue js as frontend
 3. JPA and Hibernate as ORM
-4. Vuetify as Material Design component collection
+2. [Vue.js](https://vuejs.org/)Vue.js as frontend JavaScript Framework
+4. [Vuetify](https://vuetifyjs.com/en/)as Material Design Component Framework
 5. Docker for containerization
+
+Database dump can be found in on the same level as README.md, and is named worker_reg_dbdump
   
+---
+  
+**Known bugs**
+
+1. In field selector, changing industry selector after changing subsector/speciality triggers server-side error.
+1. Editing worker does not show his working field tree.
+
+---
+
+**App 2min preview**
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=iK37azkOm0Y
+" target="_blank"><img src="http://img.youtube.com/vi/iK37azkOm0Y/0.jpg" 
+alt="preview" width="240" height="180" border="10" /></a>

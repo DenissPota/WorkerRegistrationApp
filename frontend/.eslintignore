@@ -1,0 +1,5 @@
+/build/
+/config/
+/dist/
+/*.js
+/test/com.helmes.worker_reg.unit/coverage/

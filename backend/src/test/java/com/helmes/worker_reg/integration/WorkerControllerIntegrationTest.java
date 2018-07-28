@@ -12,6 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.helmes.worker_reg.entities.Sector;
+import com.helmes.worker_reg.entities.Worker;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +34,11 @@ public class WorkerControllerIntegrationTest {
     @Autowired
     private MockMvc mvc;
 
-
     @LocalServerPort
     private int port;
 
-
     @Test
-    public void givenWorkerWhenStatusOkAndCorrectFirstName() throws Exception {
+    public void checkWorkerByIdWithCorrectFirstNameFirstWorkerPreLoaded() throws Exception {
         mvc.perform(get("/workers/1")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -46,13 +47,49 @@ public class WorkerControllerIntegrationTest {
                 .andExpect(jsonPath("$.firstName", is("Hilgert")));
     }
     @Test
-    public void checkWhetherInitialWorkersLoaded() throws Exception {
+    public void checkWorkerByIdWithCorrectLastNameLastWorkerPreLoaded() throws Exception {
+        mvc.perform(get("/workers/7")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.lastName", is("Shadows")));
+    }
+    @Test
+    public void checkWhetherInitialWorkersPreLoaded() throws Exception {
         mvc.perform(get("/workers/")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content()
                         .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(5))));
+    }
+    @Test
+    public void addWorkerToPreLoadedListCheckName() throws Exception {
+        Worker worker = new Worker();
+        Sector sector = new Sector();
+        worker.setId((long)777);
+        worker.setFirstName("Jaina");
+        worker.setLastName("Proudmoore");
+        worker.setAgreedToTerms(true);
+        sector.setSectorName("Manufacturing");
+        sector.setId((long)1);
+        worker.setSector(sector);
+
+        mvc.perform(post("/workers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Access-Control-Request-Method", "POST")
+                .header("Origin", "http://localhost:8088")
+                .content(asJsonString(asJsonString(worker))))
+                .andExpect(status().isCreated());
+    }
+
+    private static String asJsonString(final Object obj) {
+        try {
+            return new ObjectMapper().writeValueAsString(obj);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
