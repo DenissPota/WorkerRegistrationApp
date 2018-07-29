@@ -86,8 +86,4 @@ public class WorkerController {
         return workerRepository.findById(id);
     }
 
-    @GetMapping("/")
-    public @ResponseBody String greeting() {
-        return "Hello World";
-    }
 }

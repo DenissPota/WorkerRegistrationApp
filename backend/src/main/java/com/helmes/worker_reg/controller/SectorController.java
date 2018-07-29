@@ -102,18 +102,4 @@ public class SectorController {
     public List<Sector> getAllSectorsIdAndNames() {
        return sectorRepository.findAll();
     }
-//    /**
-//     * Find sector by id.
-//     *
-//     * @return sector(id, name)
-//     */
-//    @CrossOrigin(origins = "http://localhost:8080")
-//    @GetMapping("/sector/{id}")
-//    public Optional<Sector> getAllSectorsById(@PathVariable Long id) {
-//       return sectorRepository.findById(id);
-//    }
-
-
-
-
 }
