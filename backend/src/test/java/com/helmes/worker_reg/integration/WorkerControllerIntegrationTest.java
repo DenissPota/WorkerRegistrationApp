@@ -1,6 +1,5 @@
 package com.helmes.worker_reg.integration;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -18,13 +17,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.helmes.worker_reg.entities.Sector;
 import com.helmes.worker_reg.entities.Worker;
-import com.helmes.worker_reg.exceptions.WorkerNotFoundException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -79,7 +76,7 @@ public class WorkerControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content()
                         .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(5))));
+                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(7))));
     }
 
     @Test
@@ -88,6 +85,17 @@ public class WorkerControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(asJsonString(worker)))
                 .andExpect(status().isOk());
+
+        MvcResult result = mvc.perform(get("/workers")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+
+        Assert.assertEquals(true, content.contains("Jaina"));
     }
 
     @Test
@@ -138,7 +146,7 @@ public class WorkerControllerIntegrationTest {
     }
 
     @Test
-    public void checkSectorsDepth2WithManufacturingParent() throws Exception {
+    public void checkSectorsDepth2WithManufacturingParentDoesNotGoDeeper() throws Exception {
         MvcResult result = mvc.perform(get("/sector/2/1"))
                 .andDo(print())
                 .andReturn();
@@ -146,7 +154,8 @@ public class WorkerControllerIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         Assert.assertEquals(true, content.contains("Construction materials"));
-        Assert.assertEquals(false, content.contains("Creative industries"));
+        Assert.assertEquals(true, content.contains("Food and Beverage"));
+        Assert.assertEquals(false, content.contains("Beverages"));
     }
 
     @Test
@@ -172,6 +181,7 @@ public class WorkerControllerIntegrationTest {
 
         Assert.assertEquals(expected, content);
     }
+
 
     private static String asJsonString(final Object obj) {
         try {
